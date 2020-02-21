@@ -14,7 +14,7 @@ para abrir o terminal, use Crtl+ Alt + t
 
 Copie e cole os comandos a seguir no prompt
 
-    conda install -c conda-force git-lfs]
+    conda install -c conda-forge git-lfs
 
     git lfs install
 
