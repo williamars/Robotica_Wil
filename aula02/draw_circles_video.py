@@ -20,8 +20,6 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 lower = 0
 upper = 1
 
-print("Press q to QUIT")
-
 # Returns an image containing the borders of the image
 # sigma is how far from the median we are setting the thresholds
 def auto_canny(image, sigma=0.33):

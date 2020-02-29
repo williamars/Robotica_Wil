@@ -8,6 +8,19 @@ cap = cv2.VideoCapture(0)
 pink = '#ff004d'
 blue = '#0173fe'
 
+def auto_canny(image, sigma=0.33):
+    # compute the median of the single channel pixel intensities
+    v = np.median(image)
+
+    # apply automatic Canny edge detection using the computed median
+    lower = int(max(0, (1.0 - sigma) * v))
+    upper = int(min(255, (1.0 + sigma) * v))
+    edged = cv2.Canny(image, lower, upper)
+
+    # return the edged image
+    return edged
+
+
 while(True):
     
     # Capture frame-by-frame
@@ -73,15 +86,44 @@ while(True):
             maior_area_blue = area_blue
             maior_blue = c
             
-    cv2.drawContours(contornos_img_blue, [maior_blue], -1, [0, 255, 255], 5);
+            
+    blur = cv2.GaussianBlur(gray,(5,5),0) 
+    bordas = auto_canny(blur)
+
+
+    circles = []
+
+
+    # Obtains a version of the edges image where we can draw in color
+    bordas_color = cv2.cvtColor(bordas, cv2.COLOR_GRAY2BGR)
+
+    # HoughCircles - detects circles using the Hough Method. For an explanation of
+    circles = None
+    circles=cv2.HoughCircles(bordas,cv2.HOUGH_GRADIENT,2,40,param1=50,param2=100,minRadius=5,maxRadius=60)
+
+    if circles is not None:        
+        circles = np.uint16(np.around(circles))
+        for i in circles[0,:]:
+            print(i)
+            # draw the outer circle
+            # cv2.circle(img, center, radius, color[, thickness[, lineType[, shift]]])
+            cv2.circle(bordas_color,(i[0],i[1]),i[2],(0,255,0),2)
+            # draw the center of the circle
+            cv2.circle(bordas_color,(i[0],i[1]),2,(0,0,255),3)        
     
-    cv2.imshow("contornos_img_blue", contornos_img_blue)  
+    cv2.imshow("contornos_img_blue", contornos_img_blue) 
+    cv2.imshow("contornos_img_pink", contornos_img_pink)
+    cv2.imshow("Circles", bordas_color)
     
     # Display the resulting frame
-    cv2.imshow('gray', gray)
-    cv2.imshow("mask", mask)
+    # cv2.imshow('gray', gray)
+    # cv2.imshow("mask", mask)
     cv2.imshow("selecao", selecao)
+    
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(bordas_color,'Press q to quit',(0,50), font, 1,(255,255,255),2,cv2.LINE_AA)
 
+    # Fechar as abas se apertar 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
