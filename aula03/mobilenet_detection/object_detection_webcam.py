@@ -37,7 +37,7 @@ net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 # implementation)
 
 
-def detect(frame):
+def detect(frame, conta_frame):
     image = frame.copy()
     (h, w) = image.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007843, (300, 300), 127.5)
@@ -68,26 +68,27 @@ def detect(frame):
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (startX, startY, endX, endY) = box.astype("int")
 
-            # display the prediction
-            label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
-            print("[INFO] {}".format(label))
-            cv2.rectangle(image, (startX, startY), (endX, endY),
-                COLORS[idx], 2)
-            y = startY - 15 if startY - 15 > 15 else startY + 15
-            cv2.putText(image, label, (startX, y),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
+            if CLASSES[idx] == 'person':
+                # display the prediction
+                label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
+                print("[INFO] {}".format(label))
+                if conta_frame >= 50:
+                    cv2.rectangle(image, (startX, startY), (endX, endY),
+                        COLORS[idx], 2)
+                    y = startY - 15 if startY - 15 > 15 else startY + 15
+                    cv2.putText(image, label, (startX, y),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
 
-            results.append((CLASSES[idx], confidence*100, (startX, startY),(endX, endY) ))
-
+                    results.append((CLASSES[idx], confidence*100, (startX, startY),(endX, endY)))
+                    conta_frame += 1
+                elif conta_frame < 50:
+                    conta_frame +=1 
+            else:
+                conta_frame = 0
+                               
     # show the output image
-    return image, results
+    return image, results, conta_frame
 
-
-
-
-
-
-import cv2
 
 #cap = cv2.VideoCapture('hall_box_battery_1024.mp4')
 cap = cv2.VideoCapture(0)
@@ -95,22 +96,18 @@ cap = cv2.VideoCapture(0)
 print("Known classes")
 print(CLASSES)
 
+contador_frame = 0
+
 while(True):
     # Capture frame-by-frame
     ret, frame = cap.read()
     
-    result_frame, result_tuples = detect(frame)
-
-
+    result_frame, result_tuples, contador_frame = detect(frame, contador_frame)
+    contador_frame+=1
+        
     # Display the resulting frame
     cv2.imshow('frame',result_frame)
-
-    # Prints the structures results:
-    # Format:
-    # ("CLASS", confidence, (x1, y1, x2, y3))
-    for t in result_tuples:
-        print(t)
-
+    
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
